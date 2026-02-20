@@ -1,9 +1,10 @@
 from conan import ConanFile
-from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
+from conan.tools.build import check_min_cstd
+from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import get, copy, rmdir
 import os
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.4"
 
 class ZxcConan(ConanFile):
     name = "zxc"
@@ -23,15 +24,8 @@ class ZxcConan(ConanFile):
         "fPIC": True,
     }
 
-    def config_options(self):
-        if self.settings.os == "Windows":
-            del self.options.fPIC
-
-    def configure(self):
-        if self.options.shared:
-            self.options.rm_safe("fPIC")
-        self.settings.rm_safe("compiler.libcxx")
-        self.settings.rm_safe("compiler.cppstd")
+    implements = ["auto_shared_fpic"]
+    languages = "C"
 
     def requirements(self):
         self.requires("rapidhash/[>=1.0]")
@@ -44,10 +38,18 @@ class ZxcConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
-        tc.variables["ZXC_NATIVE_ARCH"] = False
-        tc.variables["ZXC_BUILD_CLI"] = False
-        tc.variables["ZXC_BUILD_TESTS"] = False
+        tc.cache_variables["ZXC_NATIVE_ARCH"] = False
+        tc.cache_variables["ZXC_BUILD_CLI"] = False
+        tc.cache_variables["ZXC_BUILD_TESTS"] = False
+        tc.cache_variables["ZXC_ENABLE_LTO"] = False
         tc.generate()
+
+        deps = CMakeDeps(self)
+        deps.generate()
+
+    def validate(self):
+        if self.settings.get_safe("compiler.cstd"):
+            check_min_cstd(self, 17)
 
     def build(self):
         cmake = CMake(self)

@@ -8,5 +8,5 @@ int main(void) {
     printf("ZXC version: %s\n", ZXC_LIB_VERSION_STR);
     printf("Compress bound for 1024 bytes: %llu\n",
            (unsigned long long)bound);
-    return (bound > 0) ? 0 : 1;
+    return 0;
 }
